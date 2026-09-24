@@ -1,0 +1,56 @@
+/* Estilos exactos copiados de css/footer.css del repositorio original */
+footer {
+  background-color: var(--azul);
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.info-footer {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.info-footer p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.info-footer a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  text-decoration: none;
+}
+
+.info-footer a:hover {
+  text-decoration: underline;
+}
+
+.redes-sociales {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 20px;
+}
+
+.redes-sociales a {
+  color: white;
+  font-size: 2rem;
+  text-decoration: none;
+  transition: transform 0.3s;
+}
+
+.redes-sociales a:hover {
+  transform: scale(1.15);
+}
+
+.copyright {
+  font-size: 0.9rem;
+}

@@ -1,0 +1,97 @@
+/* Navbar styles - migrated from header.css */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 50px;
+  background-color: white;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+nav ul {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+}
+
+nav a {
+  text-decoration: none;
+  color: #1f3b5b;
+  font-weight: bold;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  width: 125px;
+}
+
+/* Hamburguesa oculta en escritorio (copiado de header.css original) */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #1f3b5b;
+  cursor: pointer;
+}
+
+#menu {
+  display: flex;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  header {
+    flex-wrap: wrap;
+    padding: 15px 20px;
+  }
+
+  .logo img {
+    width: 80px;
+  }
+
+  .menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #1f3b5b;
+    cursor: pointer;
+  }
+
+  #menu {
+    display: none;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  #menu.activo {
+    display: block;
+  }
+
+  #menu ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 0;
+  }
+
+  #menu li {
+    width: 100%;
+    text-align: center;
+  }
+
+  #menu a {
+    display: block;
+    padding: 10px 0;
+  }
+}

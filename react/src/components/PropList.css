@@ -1,0 +1,20 @@
+/* PropList.css - grid de 2 columnas + títulos de sección (copiados de cards.css y galeria.css originales) */
+#propiedades h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-top: 60px;
+}
+
+#alquiler h2,
+#venta h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: var(--azul);
+}
+
+.property-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 20px;
+}

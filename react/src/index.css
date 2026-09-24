@@ -1,0 +1,36 @@
+/* Importa fuentes de Google Fonts - debe ir primero */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/*Reset de estilos para evitar inconsistencias entre navegadores - copiado de css/style.css original*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/* Variables de colores y estilos para mantener la coherencia en el diseño - copiado de css/style.css original*/
+:root {
+    --azul: #1f3b5b;
+    --gris: #f4f4f4;
+    --texto: #333;
+    --radio: 15px;/* Radio de bordes para botones y tarjetas */
+}
+/* Estilos generales para el cuerpo del documento, aplicando la fuente, colores y espaciado - copiado de css/style.css original*/
+body {
+    font-family: "Montserrat", sans-serif;
+    background-color: var(--gris);
+    color: var(--texto);
+    line-height: 1.5;
+}
+/* Estilos para las imágenes, asegurando que se adapten al contenedor sin distorsionarse - copiado de css/style.css original*/
+img {
+    max-width: 100%;
+    display: block;
+}
+
+#home,
+#propiedades,
+#alquiler,
+#venta,
+#tasacion {
+  scroll-margin-top: 120px;
+}
