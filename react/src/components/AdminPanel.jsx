@@ -29,6 +29,7 @@ export const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([])
   const [tipos, setTipos] = useState([])
   const [propiedades, setPropiedades] = useState([])
+  const [busqueda, setBusqueda] = useState('')
   const [form, setForm] = useState(FORM_INICIAL)
   const [imagenes, setImagenes] = useState([]) // { id, nombre, etiqueta, url, subiendo, error }
   const [arrastrando, setArrastrando] = useState(false)
@@ -73,6 +74,11 @@ export const AdminPanel = () => {
       })
       setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, url: res.url, subiendo: false } : i)))
     } catch (err) {
+      if (/autorizado/i.test(err.message)) {
+        cerrarSesion()
+        navigate('/login')
+        return
+      }
       setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, subiendo: false, error: err.message } : i)))
     }
   }
@@ -140,6 +146,18 @@ export const AdminPanel = () => {
       setEnviando(false)
     }
   }
+
+  const textoBusqueda = busqueda.trim().toLowerCase()
+  const propiedadesFiltradas = textoBusqueda
+    ? propiedades.filter((p) => {
+        const tipo = (p.tipo_id && p.tipo_id.nombre_tipo) || ''
+        return (
+          (p.direccion || '').toLowerCase().includes(textoBusqueda) ||
+          (p.zona || '').toLowerCase().includes(textoBusqueda) ||
+          tipo.toLowerCase().includes(textoBusqueda)
+        )
+      })
+    : propiedades
 
   return (
     <div className="admin-pagina">
@@ -307,12 +325,25 @@ export const AdminPanel = () => {
             {propiedades.length} {propiedades.length === 1 ? 'propiedad cargada' : 'propiedades cargadas'} · <code>GET /api/properties</code>
           </p>
 
+          <div className="admin-busqueda">
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar propiedad a eliminar por dirección, barrio o tipo..."
+              aria-label="Buscar propiedad"
+            />
+          </div>
+
           <div className="admin-tabla">
             {propiedades.length === 0 && (
               <p className="admin-tabla-vacia">No hay propiedades cargadas.</p>
             )}
+            {propiedades.length > 0 && propiedadesFiltradas.length === 0 && (
+              <p className="admin-tabla-vacia">No hay propiedades que coincidan con tu búsqueda.</p>
+            )}
 
-            {propiedades.map((prop) => (
+            {propiedadesFiltradas.map((prop) => (
               <div className="admin-fila" key={prop._id}>
                 <img
                   className="admin-fila-foto"

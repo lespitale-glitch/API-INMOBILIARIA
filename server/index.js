@@ -137,13 +137,33 @@ app.post('/api/contactos', async (req, res) => {
   }
 })
 
-// Sesiones de login: token -> usuario (sin password). Se generan en memoria
-// con crypto.randomBytes; se invalidan al reiniciar el servidor.
+// Sesiones de login: token -> usuario (sin password). Se persisten en
+// data/sesiones.json para que los tokens sigan siendo válidos aunque se
+// reinicie el servidor (así el panel no pierde la sesión del usuario).
+const SESIONES_ARCHIVO = path.join(__dirname, 'data', 'sesiones.json')
 const sesiones = new Map()
+
+try {
+  if (fs.existsSync(SESIONES_ARCHIVO)) {
+    const guardadas = JSON.parse(fs.readFileSync(SESIONES_ARCHIVO, 'utf8'))
+    for (const [token, usuario] of Object.entries(guardadas)) sesiones.set(token, usuario)
+  }
+} catch {
+  // archivo corrupto o ilegible: arranca sin sesiones previas
+}
+
+function persistirSesiones() {
+  try {
+    fs.writeFileSync(SESIONES_ARCHIVO, JSON.stringify(Object.fromEntries(sesiones)))
+  } catch {
+    // mejor esfuerzo: si no se puede escribir, la sesión seguirá vigente en memoria
+  }
+}
 
 function generarToken(usuario) {
   const token = crypto.randomBytes(24).toString('hex')
   sesiones.set(token, usuario)
+  persistirSesiones()
   return token
 }
 

@@ -370,3 +370,24 @@
     flex-basis: calc(100% - 85px);
   }
 }
+
+/* Buscador del listado de gestión */
+.admin-busqueda {
+  margin-bottom: 15px;
+}
+
+.admin-busqueda input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: white;
+}
+
+.admin-busqueda input:focus {
+  outline: 2px solid var(--azul);
+  outline-offset: 1px;
+  border-color: transparent;
+}
