@@ -22,11 +22,12 @@ const Usuario = require('./models/Usuario')
 const seedData = require('./data/seedData')
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3002
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/nuevo_techo'
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '15mb' })) // imágenes en data-URL desde el panel admin
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 let mongoOk = false
 
@@ -196,10 +197,30 @@ app.post('/api/usuarios/login', async (req, res) => {
   }
 })
 
+// POST /api/imagenes - sube una imagen (data-URL) del panel admin y la guarda
+// en server/uploads/, devolviendo la ruta pública /uploads/<id>.<ext>
+app.post('/api/imagenes', requerirAuth, (req, res) => {
+  try {
+    const { data } = req.body || {}
+    const match = /^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/.exec(String(data || ''))
+    if (!match) {
+      return res.status(400).json({ error: 'Se espera una imagen data-URL (png, jpg, gif o webp)' })
+    }
+    const ext = { png: 'png', jpg: 'jpg', jpeg: 'jpg', gif: 'gif', webp: 'webp' }[match[1].toLowerCase()]
+    const archivo = `${crypto.randomBytes(8).toString('hex')}.${ext}`
+    const dir = path.join(__dirname, 'uploads')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, archivo), Buffer.from(match[2], 'base64'))
+    res.status(201).json({ url: `/uploads/${archivo}` })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // POST /api/properties - alta de propiedad (requiere token de /api/usuarios/login)
 app.post('/api/properties', requerirAuth, async (req, res) => {
   try {
-    const { direccion, zona, ambientes, metros_cuadrados, precio, operacion, caracteristicas, imagenes, agente_id, tipo_id } = req.body
+    const { direccion, zona, ambientes, metros_cuadrados, precio, operacion, caracteristicas, imagenes, imagenes_etiquetas, agente_id, tipo_id } = req.body
 
     if (!direccion || !zona || ambientes == null || ambientes === '' || metros_cuadrados == null || metros_cuadrados === '' || precio == null || precio === '' || !operacion || !agente_id || !tipo_id) {
       return res.status(400).json({ error: 'Faltan campos obligatorios: direccion, zona, ambientes, metros_cuadrados, precio, operacion, agente_id, tipo_id' })
@@ -219,6 +240,7 @@ app.post('/api/properties', requerirAuth, async (req, res) => {
         ? caracteristicas.map((c) => String(c).trim()).filter(Boolean)
         : String(caracteristicas || '').split(',').map((c) => c.trim()).filter(Boolean),
       imagenes: Array.isArray(imagenes) ? imagenes.map((i) => String(i).trim()).filter(Boolean) : (imagenes ? [String(imagenes).trim()] : []),
+      ...(Array.isArray(imagenes_etiquetas) ? { imagenes_etiquetas: imagenes_etiquetas.map((e) => String(e)) } : {}),
       agente_id,
       tipo_id,
     }

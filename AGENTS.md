@@ -4,7 +4,7 @@
 - **Sitio estático (legacy)**: open `index.html` in a browser, or `python -m http.server` from the repo root (`http://localhost:8000`).
 - **Frontend React**: `cd react && npm install && npm run dev` → `http://localhost:5173` (si 5173 está ocupado, Vite sube en 5174 — mirar la terminal).
 - **API (backend)**: `cd server && npm install && npm run seed && npm start` → `http://localhost:3002` (`.env` con `PORT=3002`; ver *Environment quirks*).
-- **Para que el sitio React quede dinámico**: levantar el backend antes que Vite; el frontend consume `/api/*` vía proxy de Vite (`react/vite.config.js` → `http://localhost:3002`, override con `API_URL=... npm run dev`).
+- **Para que el sitio React quede dinámico**: levantar el backend antes que Vite; el frontend consume `/api/*` y `/uploads/*` vía proxy de Vite (`react/vite.config.js` → `http://localhost:3002`, override con `API_URL=... npm run dev`).
 
 ## Backend (`server/`) — API REST + Mongoose
 - Commands: `npm run seed` (poblar datos; `npm run seed -- --reset` fuerza reinicio), `npm start` (levanta Express en `PORT`, default 3002).
@@ -12,7 +12,8 @@
 - **MongoDB es opcional**: si no responde en 3s, `seed.js` escribe `data/db.json` y el servidor opera en modo memoria con los datos del TP (`data/seedData.js`). `data/db.json` está en `.gitignore`.
 - Routes:
   - `GET /api/properties` — propiedades con `agente_id` y `tipo_id` poblados.
-  - `POST /api/properties` — alta de propiedad; **requiere** `Authorization: Bearer <token>` de `POST /api/usuarios/login` (401 sin token).
+  - `POST /api/properties` — alta de propiedad; **requiere** `Authorization: Bearer <token>` de `POST /api/usuarios/login` (401 sin token). Acepta `imagenes` [String] e `imagenes_etiquetas` [String] (etiqueta por imagen: "Frente", "Patio", ...).
+  - `POST /api/imagenes` — subida desde el panel admin (auth requerida): recibe `{ data: <data-URL png/jpg/gif/webp> }`, guarda el archivo en `server/uploads/` (gitignored) y devuelve `{ url: '/uploads/<id>.<ext>' }`. Se sirve estático con `express.static('/uploads')`.
   - `GET /api/tipos-propiedad` — tipos de inmueble.
   - `GET /api/usuarios` — personal (agentes/admins) **sin** `password`; alimenta el select "Agente" del panel admin.
   - `POST /api/usuarios/login` — `{ email, password }` → valida con `bcrypt.compare` y devuelve `{ token, usuario }` (401 si falla).
@@ -29,16 +30,17 @@
 Definido en `server/data/seedData.js` con `_id` hex fijo de 24 chars (idénticos en MongoDB y en `data/db.json`/modo memoria); `agente_id` y `tipo_id` apuntan directo a esos `_id`.
 - **Usuarios (3)**: Leandro Spitale (agente), Federico Rossi (agente), Mariana López (admin). `password` = hash **real** de bcrypt (bcryptjs, costo 10) de la contraseña demo `nuevotecho2026` (igual para los 3).
 - **Tipos (4)**: Casa, Departamento, Oficina, PH.
-- **Propiedades (5)**: Palermo, Belgrano, San Isidro, Recoleta y un PH en Palermo (mezcla Venta/Alquiler).
+- **Propiedades (5)**: Palermo, Belgrano, San Isidro, Recoleta y un PH en Palermo (mezcla Venta/Alquiler). **2 son tipo Oficina** (Av. Santa Fe 3450 en Palermo/Venta y Julián Álvarez 1650 en Belgrano/Alquiler) para que el filtro "Oficina" del Hero devuelva resultados — se convirtieron 2 docs (no se agregaron) para respetar el máximo de 5 del TP.
 - **Contactos (4)**: Claudio Benítez (2026-08-15), María González (2026-08-28), Jorge Peralta (2026-09-10), Ana Gutiérrez (2026-09-20) — fechas distintas, todos con `tipo_id`.
 - Imágenes en datos apuntan a rutas `/img/...` de `react/public/`.
 
 ## Frontend React (`react/`) — sitio dinámico + panel privado
 - `react-router-dom` (v7): rutas `"/"` (Home público), `"/login"` (ingreso del personal), `"/admin"` (dashboard protegido). Sin sesión válida, `/admin` redirige a `/login`.
 - **Buscador en el Hero** (`Hero.jsx`): selects de Tipo (cargados desde `GET /api/tipos-propiedad`) y Operación + input de Zona/Barrio. El estado vive en `App.jsx` (`filtros`) y baja a `Hero` y a los tres `PropertyList`; al cambiar un filtro o enviar el form (`Buscar` → scroll a `#propiedades`) las tarjetas se filtran en tiempo real.
-- **`PropertyList.jsx`**: trae las tarjetas de `GET /api/properties` (fetch en `App.jsx`, se refresca al montar el Home → las altas de `/admin` aparecen solas). Filtra por categoría (`destacadas` = todo / `alquiler` / `venta` por `operacion`) **y** por `filtros` (tipo id, operación, zona/dirección substring). Estado vacío: `.vacio`.
+- **`PropertyList.jsx`**: recibe las tarjetas de `GET /api/properties` (fetch en `App.jsx`, se refresca al montar el Home → las altas de `/admin` aparecen solas). Filtra por categoría (`destacadas` = todo / `alquiler` / `venta` por `operacion`) **y** por `filtros` (tipo id, operación, zona/dirección substring, lógica compartida en `src/filtros.js` → `coincideFiltros`). Estado vacío por sección: `.vacio`.
+- **Estado global sin resultados** (`App.jsx`): si tras aplicar los filtros el total de resultados es 0, se ocultan las 3 secciones y se muestra un único contenedor centrado (`.sin-resultados` en `PropList.css`) con "No encontramos propiedades que coincidan con tu búsqueda" y botón **Limpiar filtros** / **Ver todo** que resetea `filtros` a los iniciales.
 - **`/login`** (`Login.jsx`): `POST /api/usuarios/login`; guarda `{ token, usuario }` en `localStorage['nt_sesion']` y navega a `/admin`.
-- **`/admin`** (`Admin.jsx`, ruta protegida): topbar con "Ver sitio público" / "Cerrar sesión" y formulario completo de alta (`direccion`, `zona`, `ambientes`, `metros_cuadrados`, `precio`, `operacion`, `tipo_id` y `agente_id` desde APIs, `caracteristicas` coma-separadas → array, `imágenes` una-por-línea → array). Envía `POST /api/properties` con `Authorization: Bearer <token>`; ante 401 cierra sesión y vuelve al login.
+- **`/admin`** (`AdminPanel.jsx`, ruta protegida): topbar con "Ver sitio público" / "Cerrar sesión" y formulario completo de alta (`direccion`, `zona`, `ambientes`, `metros_cuadrados`, `precio`, `operacion`, `tipo_id` y `agente_id` desde APIs, `caracteristicas` coma-separadas → array). **Imágenes con drag & drop**: zona `admin-drop` (click para elegir o arrastrar archivos png/jpg/gif/webp) → cada archivo se sube vía `POST /api/imagenes` (FileReader → data-URL) y aparece como miniatura con input de **etiqueta** (datalist con sugerencias: Frente, Patio, Balcón, Cocina, Ambiente Principal) + botón Quitar; al publicar se envían `imagenes` (urls `/uploads/...`) y `imagenes_etiquetas` en paralelo. Envía `POST /api/properties` con `Authorization: Bearer <token>`; ante 401 cierra sesión y vuelve al login.
 - **`react/src/api.js`**: helper `api(ruta, opciones)` (prefijo `/api`, JSON, Authorization) + `getSesion/guardarSesion/cerrarSesion`.
 - Navbar agrega link "Ingreso" → `/login`.
 

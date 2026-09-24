@@ -9,6 +9,7 @@ const propiedadSchema = new mongoose.Schema({
   operacion: { type: String, required: true, enum: ['Venta', 'Alquiler'] },
   caracteristicas: [{ type: String }],
   imagenes: [{ type: String }],
+  imagenes_etiquetas: [{ type: String }], // opcional: etiqueta por imagen ("Frente", "Patio", ...)
   agente_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
   tipo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'TipoPropiedad', required: true },
 })

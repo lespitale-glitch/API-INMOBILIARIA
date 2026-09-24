@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, Link } from 'react-router-dom'
 import { api, getSesion, cerrarSesion } from '../api'
-import './Admin.css'
+import './AdminPanel.css'
 
 const FORM_INICIAL = {
   direccion: '',
@@ -11,17 +11,29 @@ const FORM_INICIAL = {
   precio: '',
   operacion: 'Venta',
   caracteristicas: '',
-  imagenes: '',
   agente_id: '',
   tipo_id: '',
 }
 
-export const Admin = () => {
+const ETIQUETAS_SUGERIDAS = ['Frente', 'Patio', 'Balcón', 'Cocina', 'Ambiente Principal']
+
+const leerDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const lector = new FileReader()
+    lector.onload = () => resolve(lector.result)
+    lector.onerror = () => reject(new Error('No se pudo leer el archivo'))
+    lector.readAsDataURL(file)
+  })
+
+export const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([])
   const [tipos, setTipos] = useState([])
   const [form, setForm] = useState(FORM_INICIAL)
+  const [imagenes, setImagenes] = useState([]) // { id, nombre, etiqueta, url, subiendo, error }
+  const [arrastrando, setArrastrando] = useState(false)
   const [mensaje, setMensaje] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const inputArchivo = useRef(null)
   const navigate = useNavigate()
 
   const sesion = getSesion()
@@ -42,15 +54,45 @@ export const Admin = () => {
     navigate('/login')
   }
 
+  const subirArchivo = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    setImagenes((prev) => [...prev, { id, nombre: file.name, etiqueta: '', url: '', subiendo: true }])
+    try {
+      const data = await leerDataUrl(file)
+      const res = await api('/imagenes', {
+        method: 'POST',
+        body: JSON.stringify({ nombre: file.name, data }),
+        headers: { Authorization: `Bearer ${sesion.token}` },
+      })
+      setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, url: res.url, subiendo: false } : i)))
+    } catch (err) {
+      setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, subiendo: false, error: err.message } : i)))
+    }
+  }
+
+  const recibirArchivos = (lista) => Array.from(lista || []).forEach(subirArchivo)
+
+  const quitarImagen = (id) => setImagenes((prev) => prev.filter((i) => i.id !== id))
+
+  const cambiarEtiqueta = (id, etiqueta) =>
+    setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, etiqueta } : i)))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setMensaje(null)
+    if (imagenes.some((i) => i.subiendo)) {
+      setMensaje({ tipo: 'error', texto: 'Esperá a que terminen de subirse las imágenes.' })
+      return
+    }
     setEnviando(true)
     try {
+      const subidas = imagenes.filter((i) => i.url && !i.error)
       const cuerpo = {
         ...form,
         caracteristicas: form.caracteristicas.split(',').map((c) => c.trim()).filter(Boolean),
-        imagenes: form.imagenes.split('\n').map((i) => i.trim()).filter(Boolean),
+        imagenes: subidas.map((i) => i.url),
+        imagenes_etiquetas: subidas.map((i) => i.etiqueta || ''),
       }
       await api('/properties', {
         method: 'POST',
@@ -59,6 +101,7 @@ export const Admin = () => {
       })
       setMensaje({ tipo: 'ok', texto: '¡Propiedad publicada! Ya aparece en el sitio público.' })
       setForm(FORM_INICIAL)
+      setImagenes([])
     } catch (err) {
       setMensaje({ tipo: 'error', texto: err.message })
       if (/autorizado|sesión|sesion/i.test(err.message)) {
@@ -156,15 +199,75 @@ export const Admin = () => {
           </div>
 
           <div className="admin-campo admin-campo--largo">
-            <label htmlFor="admin-imagenes">Imágenes (una ruta por línea)</label>
-            <textarea id="admin-imagenes" rows="3" value={form.imagenes} onChange={cambiar('imagenes')} placeholder={'/img/venta/casa.png\n/alquiler/depto.png'} />
+            <label>Imágenes (arrastrá y soltá, o hacé clic para elegir)</label>
+            <div
+              className={`admin-drop${arrastrando ? ' admin-drop--activo' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => inputArchivo.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputArchivo.current?.click() }}
+              onDragOver={(e) => { e.preventDefault(); setArrastrando(true) }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setArrastrando(false)
+                recibirArchivos(e.dataTransfer.files)
+              }}
+            >
+              <strong>Arrastrá las imágenes acá</strong>
+              <span>o hacé clic para seleccionarlas (png, jpg, gif, webp)</span>
+              <input
+                ref={inputArchivo}
+                type="file"
+                hidden
+                multiple
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                onChange={(e) => { recibirArchivos(e.target.files); e.target.value = '' }}
+              />
+            </div>
+
+            {imagenes.length > 0 && (
+              <ul className="admin-miniaturas">
+                {imagenes.map((img) => (
+                  <li key={img.id} className="admin-mini">
+                    {img.url && !img.subiendo ? (
+                      <img src={img.url} alt={img.etiqueta || img.nombre} />
+                    ) : (
+                      <div className={`admin-mini-espera${img.error ? ' admin-mini-espera--error' : ''}`}>
+                        {img.error ? 'Error' : 'Subiendo…'}
+                      </div>
+                    )}
+                    <div className="admin-mini-datos">
+                      <span className="admin-mini-nombre" title={img.nombre}>{img.nombre}</span>
+                      <input
+                        list="etiquetas-sugeridas"
+                        placeholder="Etiqueta (ej: Frente)"
+                        value={img.etiqueta}
+                        disabled={img.subiendo}
+                        onChange={(e) => cambiarEtiqueta(img.id, e.target.value)}
+                      />
+                      <button type="button" className="admin-mini-quitar" onClick={() => quitarImagen(img.id)}>
+                        Quitar
+                      </button>
+                      {img.error && <span className="admin-mini-error">{img.error}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <datalist id="etiquetas-sugeridas">
+              {ETIQUETAS_SUGERIDAS.map((et) => (
+                <option key={et} value={et} />
+              ))}
+            </datalist>
           </div>
 
           <div className="admin-campo admin-campo--largo admin-botones">
             <button type="submit" disabled={enviando}>
               {enviando ? 'Publicando…' : 'Publicar propiedad'}
             </button>
-            <button type="button" className="admin-borrar" onClick={() => { setForm(FORM_INICIAL); setMensaje(null) }}>
+            <button type="button" className="admin-borrar" onClick={() => { setForm(FORM_INICIAL); setImagenes([]); setMensaje(null) }}>
               Borrar
             </button>
           </div>

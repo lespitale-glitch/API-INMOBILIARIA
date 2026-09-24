@@ -1,20 +1,9 @@
 import React from 'react'
 import PropertyCard from './PropertyCard'
+import { coincideFiltros } from '../filtros'
 import './PropList.css'
 
 const IMAGEN_POR_DEFECTO = '/img/destacadas/casa.jpeg'
-
-const coincideFiltros = (prop, filtros) => {
-  if (filtros.operacion && prop.operacion !== filtros.operacion) return false
-  if (filtros.tipo && prop.tipo_id?._id !== filtros.tipo) return false
-  if (filtros.zona) {
-    const texto = filtros.zona.trim().toLowerCase()
-    const enZona = (prop.zona || '').toLowerCase().includes(texto)
-    const enDireccion = (prop.direccion || '').toLowerCase().includes(texto)
-    if (!enZona && !enDireccion) return false
-  }
-  return true
-}
 
 export const PropertyList = ({ category, propiedades = [], filtros = {}, cargando = false }) => {
   const filtradas = propiedades.filter((prop) => {
