@@ -3,8 +3,8 @@
 //
 // - Todos los documentos incluyen `_id` fijo (hex de 24 caracteres) para que
 //   los datos sean idénticos en MongoDB y en el modo memoria (data/db.json).
-// - `password` guarda un hash simulado de Bcrypt ($2b$10$...) — no es una
-//   contraseña real ni resultado de bcrypt real.
+// - `password` = hash REAL de bcrypt (bcryptjs, costo 10) de la contraseña de
+//   demo `nuevotecho2026` (la misma para los 3 usuarios de prueba).
 // - `agente_id` / `tipo_id` referencian directamente los `_id` de abajo.
 
 const agentes = [
@@ -12,21 +12,21 @@ const agentes = [
     _id: '64f1d2e3a4b5c6d7e8f90a01',
     nombre: 'Leandro Spitale',
     email: 'leandro.spitale@nuevotecho.com',
-    password: '$2b$10$X7vJ8kLmN9pQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYz0123Q7',
+    password: '$2b$10$C1UDPK/CvoVvnq0MaQPvxeaaPOe9Zp.YOkl3L7s0cqGDiI.02xQAG',
     rol: 'agente',
   },
   {
     _id: '64f1d2e3a4b5c6d7e8f90a02',
     nombre: 'Federico Rossi',
     email: 'federico.rossi@nuevotecho.com',
-    password: '$2b$10$R5tY7uI9oP1aS3dF5gH7jK9lZ2xC4vB6nM8qW0eR2tY4uI6oPaSb3',
+    password: '$2b$10$hkVrOVrKmD9pgoPbJNvOJuQqBM70dau.y39Du/HQ1gGrtVbmHhpjm',
     rol: 'agente',
   },
   {
     _id: '64f1d2e3a4b5c6d7e8f90a03',
     nombre: 'Mariana López',
     email: 'mariana.lopez@nuevotecho.com',
-    password: '$2b$10$M3nB5vC7xZ9qW1eR3tY5uI7oP9aS2dF4gH6jK8lZ0xC2vB4nM6qZk',
+    password: '$2b$10$fD0E3jBdDxE1jnpw2dH3G.8JH4te3E1LYAtcW1uTwZWPW2kw6FQOW',
     rol: 'admin',
   },
 ]

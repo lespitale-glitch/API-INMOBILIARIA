@@ -44,6 +44,46 @@
   text-decoration: none;
   padding: 12px 20px;
 }
+
+/* Buscador del Hero (tipo / operación / zona) */
+.buscador {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.buscador label {
+  color: var(--azul);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.buscador select,
+.buscador input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  background-color: white;
+}
+
+.buscador button {
+  background-color: var(--azul);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.buscador button:hover {
+  opacity: 0.9;
+}
+
 .eslogan {
   background-color: var(--azul);
   color: white;

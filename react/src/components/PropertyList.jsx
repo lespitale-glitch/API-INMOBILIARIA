@@ -2,129 +2,53 @@ import React from 'react'
 import PropertyCard from './PropertyCard'
 import './PropList.css'
 
-// Datos de prueba basados en el HTML original
-const properties = [
-  // Destacadas
-  {
-    image: '/img/destacadas/casa.jpeg',
-    title: 'Casa moderna',
-    subtitle: '3 ambientes · Jardín · USD 120.000',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  {
-    image: '/img/destacadas/departamento centrico.jpeg',
-    title: 'Departamento céntrico',
-    subtitle: '2 ambientes · Balcón · USD 85.000',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  {
-    image: '/img/destacadas/oficina.jpeg',
-    title: 'Oficina comercial',
-    subtitle: '30 m² · Microcentro · Alquiler',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  {
-    image: '/img/destacadas/casa_con_pileta.jpeg',
-    title: 'Casa con pileta',
-    subtitle: '5 ambientes · Pileta · USD 210.000',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  {
-    image: '/img/destacadas/depto_premium.jpeg',
-    title: 'Departamento premium',
-    subtitle: '2 ambientes · USD 145.000',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  {
-    image: '/img/destacadas/oficina_ejecutiva.jpeg',
-    title: 'Oficina ejecutiva',
-    subtitle: '80 m² · Puerto Madero · Venta',
-    badge: 'Destacada',
-    category: 'destacadas',
-  },
-  // Alquiler
-  {
-    image: '/img/alquiler/casa_jardin.png',
-    title: 'Casa con jardín',
-    subtitle: '4 Ambientes - Palermo',
-    category: 'alquiler',
-  },
-  {
-    image: '/img/alquiler/dpto.png',
-    title: 'Departamento céntrico',
-    subtitle: '2 Ambientes - Retiro',
-    category: 'alquiler',
-  },
-  {
-    image: '/img/alquiler/oficina.png',
-    title: 'Oficina comercial',
-    subtitle: 'Oficina comercial - 40 m² - Microcentro',
-    category: 'alquiler',
-  },
-  {
-    image: '/img/alquiler/casa-moderna-con-jardin.jpg',
-    title: 'Casa moderna',
-    subtitle: '4 Ambientes - Palermo',
-    category: 'alquiler',
-  },
-  {
-    image: '/img/alquiler/depto_moderno.png',
-    title: 'Departamento moderno',
-    subtitle: '2 Ambientes - Retiro',
-    category: 'alquiler',
-  },
-  {
-    image: '/img/alquiler/oficina_grande.png',
-    title: 'Oficina grande',
-    subtitle: 'Oficina grande - 45 m² - Subsuelo - Microcentro',
-    category: 'alquiler',
-  },
-  // Venta
-  {
-    image: '/img/venta/casa.png',
-    title: 'Casa en venta',
-    subtitle: '4 Ambientes - San Isidro',
-    category: 'venta',
-  },
-  {
-    image: '/img/venta/depto_lujoso.png',
-    title: 'Departamento premium',
-    subtitle: '2 Ambientes - Puerto Madero',
-    category: 'venta',
-  },
-  {
-    image: '/img/venta/oficina.png',
-    title: 'Oficina en venta',
-    subtitle: '25 m² - Microcentro',
-    category: 'venta',
-  },
-  {
-    image: '/img/venta/casa_moderna.png',
-    title: 'Casa moderna',
-    subtitle: '4 Ambientes - Zona Roja - Palermo',
-    category: 'venta',
-  },
-]
+const IMAGEN_POR_DEFECTO = '/img/destacadas/casa.jpeg'
 
-export const PropertyList = ({ category }) => {
-  const filtered = category
-    ? properties.filter((prop) => prop.category === category)
-    : properties
+const coincideFiltros = (prop, filtros) => {
+  if (filtros.operacion && prop.operacion !== filtros.operacion) return false
+  if (filtros.tipo && prop.tipo_id?._id !== filtros.tipo) return false
+  if (filtros.zona) {
+    const texto = filtros.zona.trim().toLowerCase()
+    const enZona = (prop.zona || '').toLowerCase().includes(texto)
+    const enDireccion = (prop.direccion || '').toLowerCase().includes(texto)
+    if (!enZona && !enDireccion) return false
+  }
+  return true
+}
+
+export const PropertyList = ({ category, propiedades = [], filtros = {}, cargando = false }) => {
+  const filtradas = propiedades.filter((prop) => {
+    if (category === 'alquiler' && prop.operacion !== 'Alquiler') return false
+    if (category === 'venta' && prop.operacion !== 'Venta') return false
+    return coincideFiltros(prop, filtros)
+  })
+
+  if (cargando) {
+    return (
+      <div className="property-list">
+        <p className="vacio">Cargando propiedades…</p>
+      </div>
+    )
+  }
+
+  if (!filtradas.length) {
+    return (
+      <div className="property-list">
+        <p className="vacio">No se encontraron propiedades con esos filtros.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="property-list">
-      {filtered.map((prop) => (
+      {filtradas.map((prop) => (
         <PropertyCard
-          key={prop.image}
-          image={prop.image}
-          title={prop.title}
-          subtitle={prop.subtitle}
-          badge={prop.badge}
+          key={prop._id}
+          image={prop.imagenes?.[0] || IMAGEN_POR_DEFECTO}
+          title={prop.direccion}
+          subtitle={`${prop.ambientes} amb · ${prop.zona} · ${prop.metros_cuadrados} m²`}
+          price={`USD ${Number(prop.precio).toLocaleString('es-AR')}`}
+          badge={category === 'destacadas' ? 'Destacada' : prop.operacion}
         />
       ))}
     </div>

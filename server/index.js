@@ -10,12 +10,15 @@
 require('dotenv').config()
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
 const Propiedad = require('./models/Propiedad')
 const TipoPropiedad = require('./models/TipoPropiedad')
 const Contacto = require('./models/Contacto')
+const Usuario = require('./models/Usuario')
 const seedData = require('./data/seedData')
 
 const app = express()
@@ -128,6 +131,109 @@ app.post('/api/contactos', async (req, res) => {
     }
     memoria.contactos.push(contacto)
     res.status(201).json({ mensaje: 'Consulta registrada (en memoria)', contacto })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Sesiones de login: token -> usuario (sin password). Se generan en memoria
+// con crypto.randomBytes; se invalidan al reiniciar el servidor.
+const sesiones = new Map()
+
+function generarToken(usuario) {
+  const token = crypto.randomBytes(24).toString('hex')
+  sesiones.set(token, usuario)
+  return token
+}
+
+function requerirAuth(req, res, next) {
+  const header = req.headers.authorization || ''
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null
+  const usuario = token && sesiones.get(token)
+  if (!usuario) return res.status(401).json({ error: 'No autorizado: iniciá sesión' })
+  req.usuario = usuario
+  next()
+}
+
+// GET /api/usuarios - personal de la inmobiliaria (sin passwords)
+app.get('/api/usuarios', async (req, res) => {
+  try {
+    if (mongoOk) {
+      return res.json(await Usuario.find().select('-password'))
+    }
+    res.json(memoria.agentes.map(({ password, ...u }) => u))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/usuarios/login - valida email + password (bcrypt) y devuelve token
+app.post('/api/usuarios/login', async (req, res) => {
+  try {
+    const { email, password } = req.body
+    if (!email || !password) {
+      return res.status(400).json({ error: 'email y password son requeridos' })
+    }
+
+    let usuario = null
+    let ok = false
+    if (mongoOk) {
+      usuario = await Usuario.findOne({ email })
+      if (usuario) ok = await bcrypt.compare(password, usuario.password)
+    } else {
+      usuario = memoria.agentes.find((a) => a.email === email)
+      if (usuario) ok = bcrypt.compareSync(password, usuario.password)
+    }
+
+    if (!usuario || !ok) {
+      return res.status(401).json({ error: 'Credenciales inválidas' })
+    }
+
+    const publico = { _id: usuario._id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
+    res.json({ token: generarToken(publico), usuario: publico })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/properties - alta de propiedad (requiere token de /api/usuarios/login)
+app.post('/api/properties', requerirAuth, async (req, res) => {
+  try {
+    const { direccion, zona, ambientes, metros_cuadrados, precio, operacion, caracteristicas, imagenes, agente_id, tipo_id } = req.body
+
+    if (!direccion || !zona || ambientes == null || ambientes === '' || metros_cuadrados == null || metros_cuadrados === '' || precio == null || precio === '' || !operacion || !agente_id || !tipo_id) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios: direccion, zona, ambientes, metros_cuadrados, precio, operacion, agente_id, tipo_id' })
+    }
+    if (!['Venta', 'Alquiler'].includes(operacion)) {
+      return res.status(400).json({ error: "operacion debe ser 'Venta' o 'Alquiler'" })
+    }
+
+    const datos = {
+      direccion: String(direccion).trim(),
+      zona: String(zona).trim(),
+      ambientes: Number(ambientes),
+      metros_cuadrados: Number(metros_cuadrados),
+      precio: Number(precio),
+      operacion,
+      caracteristicas: Array.isArray(caracteristicas)
+        ? caracteristicas.map((c) => String(c).trim()).filter(Boolean)
+        : String(caracteristicas || '').split(',').map((c) => c.trim()).filter(Boolean),
+      imagenes: Array.isArray(imagenes) ? imagenes.map((i) => String(i).trim()).filter(Boolean) : (imagenes ? [String(imagenes).trim()] : []),
+      agente_id,
+      tipo_id,
+    }
+
+    if (mongoOk) {
+      const creada = await Propiedad.create(datos)
+      const poblada = await Propiedad.findById(creada._id)
+        .populate('agente_id', 'nombre email rol')
+        .populate('tipo_id', 'nombre_tipo')
+      return res.status(201).json(poblada)
+    }
+
+    const nueva = { _id: crypto.randomBytes(12).toString('hex'), ...datos }
+    memoria.propiedades.push(nueva)
+    res.status(201).json(poblarEnMemoria([nueva])[0])
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

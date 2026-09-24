@@ -1,0 +1,164 @@
+/* Panel de administración (/admin) */
+.admin-pagina {
+  min-height: 100vh;
+  background-color: var(--gris);
+}
+
+.admin-topbar {
+  background-color: var(--azul);
+  color: white;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 25px;
+}
+
+.admin-marca {
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.admin-usuario {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.admin-acciones {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-acciones a {
+  color: white;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.admin-acciones button {
+  background-color: white;
+  color: var(--azul);
+  border: none;
+  border-radius: 5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.admin-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.admin-main h1 {
+  color: var(--azul);
+  font-size: 1.6rem;
+  margin-bottom: 5px;
+}
+
+.admin-subtitulo {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+.admin-mensaje {
+  border-radius: 5px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.admin-mensaje--ok {
+  background-color: #e7f6ec;
+  color: #1e7a3c;
+}
+
+.admin-mensaje--error {
+  background-color: #fdecea;
+  color: #b3261e;
+}
+
+.admin-mensaje a {
+  color: inherit;
+  font-weight: bold;
+}
+
+.admin-form {
+  background-color: white;
+  border-radius: var(--radio);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.admin-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-campo--largo {
+  grid-column: 1 / -1;
+}
+
+.admin-campo label {
+  color: var(--azul);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-campo input,
+.admin-campo select,
+.admin-campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.admin-botones {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.admin-botones button {
+  background-color: var(--azul);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 22px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex: 1;
+}
+
+.admin-botones button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.admin-botones .admin-borrar {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .admin-form {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .admin-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

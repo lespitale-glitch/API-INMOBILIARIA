@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import './Navbar.css'
 
 export const Navbar = ({ isMenuOpen, onMenuToggle }) => {
@@ -20,6 +21,7 @@ export const Navbar = ({ isMenuOpen, onMenuToggle }) => {
           <li><a href="#alquiler">Alquiler</a></li>
           <li><a href="#venta">Venta</a></li>
           <li><a href="#tasacion">Tasación</a></li>
+          <li><Link to="/login">Ingreso</Link></li>
         </ul>
       </nav>
     </header>

@@ -1,0 +1,88 @@
+/* Login - ingreso del personal de la inmobiliaria */
+.login-pagina {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gris);
+  padding: 20px;
+}
+
+.login-card {
+  background-color: white;
+  border-radius: var(--radio);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 40px 35px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-logo {
+  display: block;
+  width: 70px;
+  margin: 0 auto 15px;
+}
+
+.login-card h1 {
+  color: var(--azul);
+  font-size: 1.4rem;
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.login-card p {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.login-card label {
+  display: block;
+  color: var(--azul);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.login-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.login-card button {
+  width: 100%;
+  background-color: var(--azul);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.login-card button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.login-card .login-error {
+  background-color: #fdecea;
+  color: #b3261e;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+.login-volver {
+  display: block;
+  text-align: center;
+  margin-top: 18px;
+  color: var(--azul);
+  font-size: 0.9rem;
+}
