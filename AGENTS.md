@@ -13,6 +13,7 @@
 - Routes:
   - `GET /api/properties` — propiedades con `agente_id` y `tipo_id` poblados.
   - `POST /api/properties` — alta de propiedad; **requiere** `Authorization: Bearer <token>` de `POST /api/usuarios/login` (401 sin token). Acepta `imagenes` [String] e `imagenes_etiquetas` [String] (etiqueta por imagen: "Frente", "Patio", ...).
+  - `DELETE /api/properties/:id` — elimina una propiedad (auth requerida); en Mongo usa `Propiedad.findByIdAndDelete`, en modo memoria hace splice por `_id`. 404 si no existe.
   - `POST /api/imagenes` — subida desde el panel admin (auth requerida): recibe `{ data: <data-URL png/jpg/gif/webp> }`, guarda el archivo en `server/uploads/` (gitignored) y devuelve `{ url: '/uploads/<id>.<ext>' }`. Se sirve estático con `express.static('/uploads')`.
   - `GET /api/tipos-propiedad` — tipos de inmueble.
   - `GET /api/usuarios` — personal (agentes/admins) **sin** `password`; alimenta el select "Agente" del panel admin.
@@ -41,6 +42,7 @@ Definido en `server/data/seedData.js` con `_id` hex fijo de 24 chars (idénticos
 - **Estado global sin resultados** (`App.jsx`): si tras aplicar los filtros el total de resultados es 0, se ocultan las 3 secciones y se muestra un único contenedor centrado (`.sin-resultados` en `PropList.css`) con "No encontramos propiedades que coincidan con tu búsqueda" y botón **Limpiar filtros** / **Ver todo** que resetea `filtros` a los iniciales.
 - **`/login`** (`Login.jsx`): `POST /api/usuarios/login`; guarda `{ token, usuario }` en `localStorage['nt_sesion']` y navega a `/admin`.
 - **`/admin`** (`AdminPanel.jsx`, ruta protegida): topbar con "Ver sitio público" / "Cerrar sesión" y formulario completo de alta (`direccion`, `zona`, `ambientes`, `metros_cuadrados`, `precio`, `operacion`, `tipo_id` y `agente_id` desde APIs, `caracteristicas` coma-separadas → array). **Imágenes con drag & drop**: zona `admin-drop` (click para elegir o arrastrar archivos png/jpg/gif/webp) → cada archivo se sube vía `POST /api/imagenes` (FileReader → data-URL) y aparece como miniatura con input de **etiqueta** (datalist con sugerencias: Frente, Patio, Balcón, Cocina, Ambiente Principal) + botón Quitar; al publicar se envían `imagenes` (urls `/uploads/...`) y `imagenes_etiquetas` en paralelo. Envía `POST /api/properties` con `Authorization: Bearer <token>`; ante 401 cierra sesión y vuelve al login.
+- **Gestión de Propiedades** (debajo del form, `AdminPanel.jsx`): listado de `GET /api/properties` con miniatura, dirección, zona, precio USD y botón **Eliminar** (rojo). Al clickear pide confirmación con `window.confirm("¿Seguro que querés eliminar esta propiedad de la base de datos?")` y, si se acepta, hace `DELETE /api/properties/:id` con el token y refresca la lista; el listado también se refresca tras cada alta.
 - **`react/src/api.js`**: helper `api(ruta, opciones)` (prefijo `/api`, JSON, Authorization) + `getSesion/guardarSesion/cerrarSesion`.
 - Navbar agrega link "Ingreso" → `/login`.
 

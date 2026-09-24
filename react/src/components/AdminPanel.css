@@ -268,3 +268,105 @@
   font-size: 0.72rem;
   color: #b3261e;
 }
+
+/* Gestión de Propiedades (listado con Eliminar) */
+.admin-gestion {
+  margin-top: 45px;
+}
+
+.admin-gestion h2 {
+  color: var(--azul);
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+}
+
+.admin-tabla {
+  background-color: white;
+  border-radius: var(--radio);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.admin-tabla-vacia {
+  text-align: center;
+  color: #888;
+  padding: 30px;
+}
+
+.admin-fila {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-fila:last-child {
+  border-bottom: none;
+}
+
+.admin-fila-foto {
+  width: 70px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.admin-fila-datos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-fila-datos strong {
+  color: var(--azul);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-fila-datos span {
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.admin-fila-precio {
+  font-weight: bold;
+  color: var(--azul);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.admin-fila-eliminar {
+  background-color: #b3261e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-fila-eliminar:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.admin-fila-eliminar:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .admin-fila {
+    flex-wrap: wrap;
+  }
+
+  .admin-fila-datos {
+    flex-basis: calc(100% - 85px);
+  }
+}

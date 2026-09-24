@@ -261,6 +261,29 @@ app.post('/api/properties', requerirAuth, async (req, res) => {
   }
 })
 
+// DELETE /api/properties/:id - elimina una propiedad (requiere token)
+app.delete('/api/properties/:id', requerirAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    if (mongoOk) {
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ error: 'Propiedad no encontrada' })
+      }
+      const eliminada = await Propiedad.findByIdAndDelete(id)
+      if (!eliminada) return res.status(404).json({ error: 'Propiedad no encontrada' })
+      return res.json({ mensaje: 'Propiedad eliminada', propiedad: eliminada })
+    }
+
+    const indice = memoria.propiedades.findIndex((p) => String(p._id) === String(id))
+    if (indice === -1) return res.status(404).json({ error: 'Propiedad no encontrada' })
+    const [eliminada] = memoria.propiedades.splice(indice, 1)
+    res.json({ mensaje: 'Propiedad eliminada (en memoria)', propiedad: eliminada })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 async function iniciar() {
   try {
     await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 3000 })

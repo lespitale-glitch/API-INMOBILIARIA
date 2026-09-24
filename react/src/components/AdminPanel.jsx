@@ -28,20 +28,26 @@ const leerDataUrl = (file) =>
 export const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([])
   const [tipos, setTipos] = useState([])
+  const [propiedades, setPropiedades] = useState([])
   const [form, setForm] = useState(FORM_INICIAL)
   const [imagenes, setImagenes] = useState([]) // { id, nombre, etiqueta, url, subiendo, error }
   const [arrastrando, setArrastrando] = useState(false)
   const [mensaje, setMensaje] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const [eliminando, setEliminando] = useState(null)
   const inputArchivo = useRef(null)
   const navigate = useNavigate()
 
   const sesion = getSesion()
 
+  const cargarPropiedades = () =>
+    api('/properties').then(setPropiedades).catch(() => setPropiedades([]))
+
   useEffect(() => {
     if (!sesion) return
     api('/usuarios').then(setUsuarios).catch(() => setUsuarios([]))
     api('/tipos-propiedad').then(setTipos).catch(() => setTipos([]))
+    cargarPropiedades()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -78,6 +84,27 @@ export const AdminPanel = () => {
   const cambiarEtiqueta = (id, etiqueta) =>
     setImagenes((prev) => prev.map((i) => (i.id === id ? { ...i, etiqueta } : i)))
 
+  const eliminarPropiedad = async (prop) => {
+    const confirmado = window.confirm('¿Seguro que querés eliminar esta propiedad de la base de datos?')
+    if (!confirmado) return
+    setEliminando(prop._id)
+    try {
+      await api(`/properties/${prop._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${sesion.token}` },
+      })
+      await cargarPropiedades()
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: err.message })
+      if (/autorizado|sesión|sesion/i.test(err.message)) {
+        cerrarSesion()
+        navigate('/login')
+      }
+    } finally {
+      setEliminando(null)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setMensaje(null)
@@ -102,6 +129,7 @@ export const AdminPanel = () => {
       setMensaje({ tipo: 'ok', texto: '¡Propiedad publicada! Ya aparece en el sitio público.' })
       setForm(FORM_INICIAL)
       setImagenes([])
+      cargarPropiedades()
     } catch (err) {
       setMensaje({ tipo: 'error', texto: err.message })
       if (/autorizado|sesión|sesion/i.test(err.message)) {
@@ -272,6 +300,46 @@ export const AdminPanel = () => {
             </button>
           </div>
         </form>
+
+        <section className="admin-gestion">
+          <h2>Gestión de Propiedades</h2>
+          <p className="admin-subtitulo">
+            {propiedades.length} {propiedades.length === 1 ? 'propiedad cargada' : 'propiedades cargadas'} · <code>GET /api/properties</code>
+          </p>
+
+          <div className="admin-tabla">
+            {propiedades.length === 0 && (
+              <p className="admin-tabla-vacia">No hay propiedades cargadas.</p>
+            )}
+
+            {propiedades.map((prop) => (
+              <div className="admin-fila" key={prop._id}>
+                <img
+                  className="admin-fila-foto"
+                  src={prop.imagenes?.[0] || '/img/destacadas/casa.jpeg'}
+                  alt={prop.direccion}
+                />
+                <div className="admin-fila-datos">
+                  <strong>{prop.direccion}</strong>
+                  <span>
+                    {prop.zona}
+                    {prop.tipo_id?.nombre_tipo ? ` · ${prop.tipo_id.nombre_tipo}` : ''}
+                    {prop.operacion ? ` · ${prop.operacion}` : ''}
+                  </span>
+                </div>
+                <span className="admin-fila-precio">USD {Number(prop.precio).toLocaleString('es-AR')}</span>
+                <button
+                  type="button"
+                  className="admin-fila-eliminar"
+                  disabled={eliminando === prop._id}
+                  onClick={() => eliminarPropiedad(prop)}
+                >
+                  {eliminando === prop._id ? 'Eliminando…' : 'Eliminar'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   )
