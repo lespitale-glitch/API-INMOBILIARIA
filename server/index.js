@@ -94,13 +94,13 @@ app.get('/api/tipos-propiedad', async (req, res) => {
   }
 })
 
-// POST /api/contactos - formulario de tasación del cliente React
+// POST /api/contactos - formulario de tasación (web) o ChatBot
 app.post('/api/contactos', async (req, res) => {
   try {
-    const { nombre, email, telefono, zona, metros, metros_cuadrados, mensaje, acepta, acepta_novedades, tipo, tipo_id } = req.body
+    const { nombre, email, telefono, zona, metros, metros_cuadrados, mensaje, acepta, acepta_novedades, tipo, tipo_id, origen } = req.body
 
-    if (!nombre || !email) {
-      return res.status(400).json({ error: 'nombre y email son requeridos' })
+    if (!nombre || (!email && !telefono)) {
+      return res.status(400).json({ error: 'nombre y email (o teléfono) son requeridos' })
     }
 
     const datos = {
@@ -111,6 +111,7 @@ app.post('/api/contactos', async (req, res) => {
       metros_cuadrados: metros_cuadrados ?? (metros != null && metros !== '' ? Number(metros) : undefined),
       mensaje,
       acepta_novedades: acepta_novedades ?? acepta ?? false,
+      origen: origen === 'ChatBot' ? 'ChatBot' : 'Web',
     }
 
     if (mongoOk) {
@@ -124,14 +125,54 @@ app.post('/api/contactos', async (req, res) => {
     }
 
     // Fallback en memoria
-    const tipoDoc = memoria.tipos.find((t) => t.nombre_tipo === tipo)
+    const tipoDoc = tipo_id ? null : memoria.tipos.find((t) => t.nombre_tipo === tipo)
     const contacto = {
       ...datos,
-      tipo_id: tipoDoc ? tipoDoc._id : null,
+      tipo_id: tipo_id || (tipoDoc ? tipoDoc._id : null),
       fecha: new Date().toISOString(),
+      _id: crypto.randomBytes(12).toString('hex'),
     }
     memoria.contactos.push(contacto)
     res.status(201).json({ mensaje: 'Consulta registrada (en memoria)', contacto })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/contactos - bandeja de consultas del panel admin (auth requerida)
+app.get('/api/contactos', requerirAuth, async (req, res) => {
+  try {
+    if (mongoOk) {
+      const contactos = await Contacto.find().sort({ fecha: -1 }).populate('tipo_id', 'nombre_tipo')
+      return res.json(contactos)
+    }
+    const contactos = [...memoria.contactos]
+      .reverse()
+      .map((c) => ({ origen: 'Web', ...c }))
+    res.json(contactos)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// DELETE /api/contactos/:id - elimina una consulta de la bandeja (auth requerida)
+app.delete('/api/contactos/:id', requerirAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    if (mongoOk) {
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ error: 'Consulta no encontrada' })
+      }
+      const eliminada = await Contacto.findByIdAndDelete(id)
+      if (!eliminada) return res.status(404).json({ error: 'Consulta no encontrada' })
+      return res.json({ mensaje: 'Consulta eliminada', contacto: eliminada })
+    }
+
+    const indice = memoria.contactos.findIndex((c) => String(c._id) === String(id))
+    if (indice === -1) return res.status(404).json({ error: 'Consulta no encontrada' })
+    const [eliminada] = memoria.contactos.splice(indice, 1)
+    res.json({ mensaje: 'Consulta eliminada (en memoria)', contacto: eliminada })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

@@ -391,3 +391,95 @@
   outline-offset: 1px;
   border-color: transparent;
 }
+
+/* Bandeja de consultas y cotizaciones */
+.admin-bandeja {
+  margin-top: 40px;
+}
+
+.admin-bandeja h2 {
+  color: var(--azul);
+  margin-bottom: 6px;
+}
+
+.admin-consultas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+
+.admin-consulta {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.admin-consulta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-consulta-top strong {
+  color: var(--azul);
+  font-size: 1rem;
+}
+
+.admin-origen {
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.admin-origen--chatbot {
+  background-color: var(--azul);
+  color: white;
+}
+
+.admin-origen--web {
+  background-color: #e8e8e8;
+  color: #555;
+}
+
+.admin-consulta-contacto {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #777;
+}
+
+.admin-consulta-mensaje {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.admin-consulta-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.admin-consulta-pie span {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+.admin-consulta-pie .admin-fila-eliminar {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}

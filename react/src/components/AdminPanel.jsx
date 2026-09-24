@@ -29,6 +29,7 @@ export const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([])
   const [tipos, setTipos] = useState([])
   const [propiedades, setPropiedades] = useState([])
+  const [contactos, setContactos] = useState([])
   const [busqueda, setBusqueda] = useState('')
   const [form, setForm] = useState(FORM_INICIAL)
   const [imagenes, setImagenes] = useState([]) // { id, nombre, etiqueta, url, subiendo, error }
@@ -44,11 +45,23 @@ export const AdminPanel = () => {
   const cargarPropiedades = () =>
     api('/properties').then(setPropiedades).catch(() => setPropiedades([]))
 
+  const cargarContactos = () =>
+    api('/contactos', { headers: { Authorization: `Bearer ${sesion.token}` } })
+      .then(setContactos)
+      .catch((err) => {
+        setContactos([])
+        if (/autorizado/i.test(err.message)) {
+          cerrarSesion()
+          navigate('/login')
+        }
+      })
+
   useEffect(() => {
     if (!sesion) return
     api('/usuarios').then(setUsuarios).catch(() => setUsuarios([]))
     api('/tipos-propiedad').then(setTipos).catch(() => setTipos([]))
     cargarPropiedades()
+    cargarContactos()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -109,6 +122,35 @@ export const AdminPanel = () => {
     } finally {
       setEliminando(null)
     }
+  }
+
+  const eliminarConsulta = async (consulta) => {
+    const confirmado = window.confirm('¿Seguro que querés eliminar esta consulta de la bandeja?')
+    if (!confirmado) return
+    try {
+      await api(`/contactos/${consulta._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${sesion.token}` },
+      })
+      await cargarContactos()
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: err.message })
+      if (/autorizado/i.test(err.message)) {
+        cerrarSesion()
+        navigate('/login')
+      }
+    }
+  }
+
+  const nombreTipoConsulta = (c) => {
+    if (c.tipo_id && typeof c.tipo_id === 'object') return c.tipo_id.nombre_tipo || ''
+    const t = tipos.find((x) => String(x._id) === String(c.tipo_id))
+    return t ? t.nombre_tipo : ''
+  }
+
+  const fechaConsulta = (fecha) => {
+    const f = new Date(fecha)
+    return Number.isNaN(f.getTime()) ? '' : f.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
   }
 
   const handleSubmit = async (e) => {
@@ -368,6 +410,42 @@ export const AdminPanel = () => {
                   {eliminando === prop._id ? 'Eliminando…' : 'Eliminar'}
                 </button>
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="admin-bandeja">
+          <h2>Bandeja de Consultas y Cotizaciones</h2>
+          <p className="admin-subtitulo">
+            {contactos.length} {contactos.length === 1 ? 'consulta' : 'consultas'} · <code>GET /api/contactos</code>
+          </p>
+
+          <div className="admin-consultas">
+            {contactos.length === 0 && (
+              <p className="admin-tabla-vacia">No hay consultas pendientes.</p>
+            )}
+            {contactos.map((c) => (
+              <article className="admin-consulta" key={c._id}>
+                <div className="admin-consulta-top">
+                  <strong>{c.nombre}</strong>
+                  <span className={`admin-origen admin-origen--${(c.origen || 'Web').toLowerCase()}`}>
+                    {c.origen || 'Web'}
+                  </span>
+                </div>
+                <p className="admin-consulta-contacto">
+                  {c.email || 'Sin email'}
+                  {c.telefono ? ` · Tel: ${c.telefono}` : ''}
+                </p>
+                <p className="admin-consulta-mensaje">{c.mensaje || 'Sin mensaje'}</p>
+                <div className="admin-consulta-pie">
+                  <span>
+                    {[nombreTipoConsulta(c), c.zona, fechaConsulta(c.fecha)].filter(Boolean).join(' · ') || '—'}
+                  </span>
+                  <button type="button" className="admin-fila-eliminar" onClick={() => eliminarConsulta(c)}>
+                    Eliminar
+                  </button>
+                </div>
+              </article>
             ))}
           </div>
         </section>

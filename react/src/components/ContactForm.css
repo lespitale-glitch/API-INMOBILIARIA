@@ -56,3 +56,23 @@
   cursor: pointer;
   flex: 1; 
 }
+/* Feedback del envío (POST /api/contactos) */
+.contacto-mensaje {
+  max-width: 700px;
+  margin: 0 auto 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.contacto-mensaje--ok {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+  border: 1px solid #b7dfc1;
+}
+
+.contacto-mensaje--error {
+  background-color: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c6c0;
+}

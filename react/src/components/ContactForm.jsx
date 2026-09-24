@@ -1,13 +1,52 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { api } from '../api'
 import './ContactForm.css'
 
 export const ContactForm = () => {
+  const [tipos, setTipos] = useState([])
+  const [estado, setEstado] = useState(null)
+
+  useEffect(() => {
+    api('/tipos-propiedad')
+      .then((d) => setTipos(Array.isArray(d) ? d : []))
+      .catch(() => setTipos([]))
+  }, [])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setEstado(null)
+    const fd = new FormData(e.target)
+    const tipoNombre = fd.get('tipo')
+    const tipoId = tipos.find((t) => t.nombre_tipo === tipoNombre)?._id
+
+    const cuerpo = {
+      nombre: fd.get('nombre'),
+      email: fd.get('email'),
+      telefono: fd.get('telefono') || undefined,
+      zona: fd.get('zona') || undefined,
+      metros: fd.get('metros') || undefined,
+      mensaje: fd.get('mensaje') || undefined,
+      acepta: fd.get('acepta') === 'on',
+      ...(tipoId ? { tipo_id: tipoId } : { tipo: tipoNombre }),
+    }
+
+    try {
+      await api('/contactos', { method: 'POST', body: JSON.stringify(cuerpo) })
+      setEstado({ tipo: 'ok', texto: '¡Gracias! Recibimos tu consulta y te contactaremos a la brevedad.' })
+      e.target.reset()
+    } catch (err) {
+      setEstado({ tipo: 'error', texto: err.message })
+    }
+  }
+
   return (
     /* Formulario de tasación, obligatorio en el TP - copiado de index.html original */
     <section id="tasacion">
       <h2>Contacto - Tasaciónes</h2>
 
-      <form>
+      {estado && <p className={`contacto-mensaje contacto-mensaje--${estado.tipo}`}>{estado.texto}</p>}
+
+      <form onSubmit={handleSubmit}>
         <label htmlFor="nombre">Nombre</label>
         <input type="text" id="nombre" name="nombre" required />
 

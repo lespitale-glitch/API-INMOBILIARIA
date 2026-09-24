@@ -6,6 +6,7 @@ import { PropertyList } from './components/PropertyList'
 import { coincideFiltros } from './filtros'
 import { ContactForm } from './components/ContactForm'
 import { Footer } from './components/Footer'
+import { ChatBot } from './components/ChatBot'
 import { Login } from './components/Login'
 import { AdminPanel } from './components/AdminPanel'
 import './App.css'
@@ -83,6 +84,8 @@ function Home() {
       <ContactForm />
 
       <Footer />
+
+      <ChatBot />
     </>
   )
 }
